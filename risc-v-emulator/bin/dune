@@ -1,0 +1,4 @@
+(executable
+ (public_name risc-v-emulator)
+ (name main)
+ (libraries risc_v_emulator))
