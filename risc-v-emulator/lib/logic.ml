@@ -32,11 +32,11 @@ let convert_str_to_instr (input : string) : instruction =
           {
             name =
               (match name with
-              | "Add" -> Add
-              | "Sub" -> Sub
-              | "Srl" -> Srl
-              | "Sll" -> Sll
-              | "Sra" -> Sra
+              | "add" -> Add
+              | "sub" -> Sub
+              | "srl" -> Srl
+              | "sll" -> Sll
+              | "sra" -> Sra
               | _ -> assert false);
             op1 = Register o1;
             op2 = Register o2;
