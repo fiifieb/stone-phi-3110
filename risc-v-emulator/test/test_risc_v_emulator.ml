@@ -14,9 +14,9 @@ let tests =
            let oughtInst : instruction =
              {
                name = Add;
-               op1 = Register "x1";
-               op2 = Register "x2";
-               op3 = Register "x3";
+               op1 = Register 1;
+               op2 = Register 2;
+               op3 = Register 3;
              }
            in
            assert_equal inst oughtInst );
@@ -30,21 +30,16 @@ let tests =
              [
                {
                  name = Addi;
-                 op1 = Register "x1";
-                 op2 = Register "x1";
+                 op1 = Register 1;
+                 op2 = Register 1;
                  op3 = Value 10;
                };
-               {
-                 name = Mv;
-                 op1 = Register "x1";
-                 op2 = Register "x2";
-                 op3 = None;
-               };
+               { name = Mv; op1 = Register 1; op2 = Register 2; op3 = None };
                {
                  name = Sub;
-                 op1 = Register "x3";
-                 op2 = Register "x1";
-                 op3 = Register "x2";
+                 op1 = Register 3;
+                 op2 = Register 1;
+                 op3 = Register 2;
                };
              ]
            in

@@ -1,3 +1,4 @@
+(**[instr_type] represents a supported RISC-V instruction*)
 type instr_type =
   | Addi
   | Add
@@ -21,16 +22,28 @@ let clean s =
     instruction components are meaningful tokens. *)
 let filter_empty = List.filter (fun s -> s <> "")
 
+(**[parse_register s] takes a register name and converts it to int. Eg. x1 -> 1*)
+let parse_register s =
+  if String.length s < 2 || s.[0] <> 'x' then failwith ("invalid register: " ^ s)
+  else
+    let idx_str = String.sub s 1 (String.length s - 1) in
+    let idx =
+      try int_of_string idx_str
+      with Failure _ -> failwith ("invalid register index: " ^ s)
+    in
+    if idx < 0 || idx > 31 then failwith ("register out of range: " ^ s)
+    else idx
+
 (** [registers] is the global register file used by the emulator. It is an array
     of 32 integers, all initially 0. *)
 let registers = Array.make 32 0
 
 (** An [operand] represents one operand of a RISC-V instruction:
-    - [Register r] represents a register name such as ["x1"].
+    - [Register r] represents a register r. 0 <= r <= 31.
     - [Value n] represents an immediate integer literal.
     - [None] is used for instructions that do not take a third operand. *)
 type operand =
-  | Register of string
+  | Register of int
   | Value of int
   | None
 
@@ -67,17 +80,22 @@ let convert_str_to_instr (input : string) : instruction =
               | "sll" -> Sll
               | "sra" -> Sra
               | _ -> failwith "unsopported instruction");
-            op1 = Register o1;
-            op2 = Register o2;
-            op3 = Register o3;
+            op1 = Register (parse_register o1);
+            op2 = Register (parse_register o2);
+            op3 = Register (parse_register o3);
           }
       | "mv", [ o1; o2 ] ->
-          { name = Mv; op1 = Register o1; op2 = Register o2; op3 = None }
+          {
+            name = Mv;
+            op1 = Register (parse_register o1);
+            op2 = Register (parse_register o2);
+            op3 = None;
+          }
       | "addi", [ o1; o2; o3 ] ->
           {
             name = Addi;
-            op1 = Register o1;
-            op2 = Register o2;
+            op1 = Register (parse_register o1);
+            op2 = Register (parse_register o2);
             op3 = Value (int_of_string o3);
           }
       | _, _ -> failwith ("Wrong number of operands for instruction: " ^ name))
