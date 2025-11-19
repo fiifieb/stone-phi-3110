@@ -8,7 +8,6 @@ let print_registers regs =
 (*Parses a line starting with "IRV" and returns a list of initial
   (register,value) pairs*)
 let parse_irv line : (int * int) list =
-  print_endline line;
   let line = String.trim line in
   let prefix = "IRV:" in
   if
@@ -82,18 +81,3 @@ let () =
   let cpu = cpu_init lines in
   Printf.printf "Register Contents:\n";
   print_registers cpu.regs
-
-(*[instructions] is sent to backend and [registers] is updated*)
-
-(**TODO: The first line of the input file will contain some values to be put in
-   some registers. Consider this the initial state of the registers.
-
-   Eg. IRV: 8@0xbeef 2@0xbee 9@0xef addi x8,x8,9 add x1,x8,x9 add x1,x1,x2
-
-   So you'll have to create a [cpu_state]. the [pc] will be the number of
-   instructions in the instruction array. [regs] will be the array of 32
-   registers each initially set to 0. then you'll have to put the initial
-   register values (IRV) into the appropriate registers. Then [instrs] will be
-   the instruction array which you'll make by calling [make_instructions] with
-   the list of instructions you read from the file excluding the first line
-   (since the first line has the initial register values (IRV)) *)
