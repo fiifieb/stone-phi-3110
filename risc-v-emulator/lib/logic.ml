@@ -228,3 +228,50 @@ let decode (inst : instruction) : decoded =
         imm = None;
         alu = PASS_OP;
       }
+
+(** [alu_execute op a b] performs the ALU operation [op] on operands [a] and
+    [b] and returns the resulting integer. For operations that ignore [b]
+    (e.g. [PASS_OP]) the value of [b] is unused. Shift amounts are masked to
+    the low 5 bits (0-31) to model RV32I behaviour. *)
+let alu_execute op a b =
+  let shamt = b land 31 in
+  match op with
+  | ADD_OP -> a + b
+  | SUB_OP -> a - b
+  | SLL_OP -> a lsl shamt
+  | SRL_OP -> a lsr shamt
+  | SRA_OP -> a asr shamt
+  | PASS_OP -> a
+
+(** [exec_decoded cpu d] executes a decoded micro-op [d] on [cpu], writing
+    the result into the destination register if present. Writes to register 0
+    are ignored (x0 is hard-wired zero). *)
+let exec_decoded (cpu : cpu_state) (d : decoded) : unit =
+  let regs = cpu.regs in
+  let src1_val =
+    match d.src1 with Some i -> regs.(i) | None -> failwith "src1 missing"
+  in
+  let src2_val =
+    match (d.src2, d.imm) with
+    | Some i, _ -> regs.(i)
+    | None, Some imm -> imm
+    | None, None -> 0
+  in
+  let result = alu_execute d.alu src1_val src2_val in
+  match d.dst with
+  | Some 0 -> ()
+  | Some dst -> regs.(dst) <- result
+  | None -> ()
+
+(** [exec_instruction cpu inst] decodes and executes a single instruction
+    [inst] on [cpu]. *)
+let exec_instruction (cpu : cpu_state) (inst : instruction) : unit =
+  let d = decode inst in
+  exec_decoded cpu d
+
+(** [run cpu] executes all instructions in [cpu.instrs] sequentially in
+    program order. After completion, [cpu.pc] is set to the number of
+    instructions executed. *)
+let run (cpu : cpu_state) : unit =
+  Array.iter (exec_instruction cpu) cpu.instrs;
+  cpu.pc <- Array.length cpu.instrs
