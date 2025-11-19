@@ -9,7 +9,7 @@ let tests =
          ( "Initialization of Register Array" >:: fun _ ->
            assert_equal (Array.make 32 0) registers );
          ( "Converting a type string to a type Instruction" >:: fun _ ->
-           let stringOfInst = "add x1 x2 x3" in
+           let stringOfInst = "add x1, x2, x3" in
            let inst = convert_str_to_instr stringOfInst in
            let oughtInst : instruction =
              {
@@ -23,7 +23,7 @@ let tests =
          ( "Converting a type string list into a type Instruction list"
          >:: fun _ ->
            let stringOfInstList =
-             [ "addi x1, x1, 10"; "mv x1 x2"; "sub x3 x1 x2" ]
+             [ "addi x1, x1, 10"; "mv x1, x2"; "sub x3, x1, x2" ]
            in
            let insts = make_instructions stringOfInstList in
            let oughInsts : instruction list =
@@ -41,7 +41,7 @@ let tests =
                  op3 = None;
                };
                {
-                 name = Add;
+                 name = Sub;
                  op1 = Register "x3";
                  op2 = Register "x1";
                  op3 = Register "x2";
