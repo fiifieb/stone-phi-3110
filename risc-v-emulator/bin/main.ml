@@ -77,7 +77,13 @@ let () =
     exit 1);
 
   let filename = Sys.argv.(1) in
-  let lines = read_lines filename in
+  let raw_lines = read_lines filename in
+  let lines =
+    raw_lines |> List.map String.trim
+    |> List.filter (fun line ->
+        line <> "" && not (String.starts_with ~prefix:"#" line))
+  in
   let cpu = cpu_init lines in
+  run cpu;
   Printf.printf "Register Contents:\n";
   print_registers cpu.regs
