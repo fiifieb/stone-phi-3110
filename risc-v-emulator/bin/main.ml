@@ -28,5 +28,6 @@ let () =
 
   let filename = Sys.argv.(1) in
   let instructions = read_lines filename in
+  List.iteri (fun i s -> Printf.printf "%d: %s\n" (i + 1) s) instructions;
   (*[instructions] is sent to backend and [registers] is updated*)
   print_registers ()
