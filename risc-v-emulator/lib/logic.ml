@@ -1,4 +1,11 @@
-(**[instr_type] represents a supported RISC-V instruction*)
+(** A supported RISC-V instruction variant.
+    - [Addi] represents the ADDI immediate addition instruction.
+    - [Add] represents register addition.
+    - [Sub] represents register subtraction.
+    - [Srl] represents logical right shift.
+    - [Sll] represents logical left shift.
+    - [Sra] represents arithmetic right shift.
+    - [Mv] represents register-to-register move. *)
 type instr_type =
   | Addi
   | Add
@@ -39,13 +46,29 @@ let parse_register s =
 let registers = Array.make 32 0
 
 (** An [operand] represents one operand of a RISC-V instruction:
-    - [Register r] represents a register r. 0 <= r <= 31.
-    - [Value n] represents an immediate integer literal.
+    - [Register r] means register number [r] (0 ≤ r ≤ 31).
+    - [Value n] eans the literal integer immediate [n].
     - [None] is used for instructions that do not take a third operand. *)
 type operand =
   | Register of int
   | Value of int
   | None
+
+(** An [alu_op] indicates the ALU operation that should be performed after
+    decoding:
+    - [ADD_OP] addition
+    - [SUB_OP] subtraction
+    - [SRL_OP] logical right shift
+    - [SLL_OP] logical left shift
+    - [SRA_OP] arithmetic right shift
+    - [PASS_OP] pass-through (used for [mv], returning the source register). *)
+type alu_op =
+  | ADD_OP
+  | SUB_OP
+  | SRL_OP
+  | SLL_OP
+  | SRA_OP
+  | PASS_OP
 
 type instruction = {
   name : instr_type;
@@ -57,12 +80,37 @@ type instruction = {
     - [name] is the instruction variant (e.g. [Add], [Sub], [Mv]).
     - [op1], [op2], [op3] are its operands. *)
 
-(** [convert_str_to_instr s] parses a single assembly instruction string [s]
-    (e.g. ["add x1, x2, x3"]) into an [instruction] record.
+type cpu_state = {
+  mutable pc : int;
+  regs : int array;
+  instrs : instruction array;
+}
+(** A [cpu_state] bundles all mutable processor state needed by the emulator:
+    - [pc] holds the index of the next instruction to execute in [instrs].
+    - [regs] is the register file (32 general-purpose integer registers).
+    - [instrs] is the program loaded into the emulator as an array of parsed
+      instructions. *)
 
-    Commas are permitted, spacing may vary, and register names are preserved.
-    Raises [Failure] if the instruction is empty, has the wrong number of
-    operands, or contains an unsupported instruction name. *)
+type decoded = {
+  dst : int option;
+  src1 : int option;
+  src2 : int option;
+  imm : int option;
+  alu : alu_op;
+}
+(** A [decoded] value represents the micro-operation obtained after decoding a
+    single instruction:
+    - [dst] is the destination register (if any).
+    - [src1] is the first source register (if any).
+    - [src2] is the second source register (if any).
+    - [imm] is the immediate operand (if the instruction uses one).
+    - [alu] specifies which ALU operation to perform. *)
+
+(** [convert_str_to_instr s] parses a single assembly instruction string [s]
+    (e.g. ["add x1, x2, x3"]) into an [instruction] record. Commas are
+    permitted, spacing may vary, and register names are preserved. Raises
+    [Failure] if the instruction is empty, has the wrong number of operands, or
+    contains an unsupported instruction name. *)
 let convert_str_to_instr (input : string) : instruction =
   let cleaned = clean input in
   let components = cleaned |> split_on_spaces |> filter_empty in
@@ -105,3 +153,78 @@ let convert_str_to_instr (input : string) : instruction =
     each element. *)
 let make_instructions (instructions_str_list : string list) : instruction list =
   List.map convert_str_to_instr instructions_str_list
+
+(** [decode inst] translates the parsed instruction [inst] into a lower-level
+    [decoded] micro-operation suitable for execution. It extracts the
+    destination register, source registers, and immediate values as appropriate
+    for the instruction variant, and selects the ALU operation that must be
+    applied. The resulting [decoded] record determines how the CPU will update
+    its state during execution. *)
+let decode (inst : instruction) : decoded =
+  let reg_of_operand = function
+    | Register r -> Some r
+    | Value _ -> None
+    | None -> None
+  in
+  let imm_of_operand = function
+    | Value n -> Some n
+    | _ -> None
+  in
+
+  match inst.name with
+  | Add ->
+      {
+        dst = reg_of_operand inst.op1;
+        src1 = reg_of_operand inst.op2;
+        src2 = reg_of_operand inst.op3;
+        imm = None;
+        alu = ADD_OP;
+      }
+  | Sub ->
+      {
+        dst = reg_of_operand inst.op1;
+        src1 = reg_of_operand inst.op2;
+        src2 = reg_of_operand inst.op3;
+        imm = None;
+        alu = SUB_OP;
+      }
+  | Srl ->
+      {
+        dst = reg_of_operand inst.op1;
+        src1 = reg_of_operand inst.op2;
+        src2 = reg_of_operand inst.op3;
+        imm = None;
+        alu = SRL_OP;
+      }
+  | Sll ->
+      {
+        dst = reg_of_operand inst.op1;
+        src1 = reg_of_operand inst.op2;
+        src2 = reg_of_operand inst.op3;
+        imm = None;
+        alu = SLL_OP;
+      }
+  | Sra ->
+      {
+        dst = reg_of_operand inst.op1;
+        src1 = reg_of_operand inst.op2;
+        src2 = reg_of_operand inst.op3;
+        imm = None;
+        alu = SRA_OP;
+      }
+  | Addi ->
+      {
+        dst = reg_of_operand inst.op1;
+        src1 = reg_of_operand inst.op2;
+        src2 = None;
+        imm = imm_of_operand inst.op3;
+        alu = ADD_OP;
+      }
+  | Mv ->
+      {
+        dst = reg_of_operand inst.op1;
+        src1 = reg_of_operand inst.op2;
+        src2 = None;
+        imm = None;
+        alu = PASS_OP;
+      }
