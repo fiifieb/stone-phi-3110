@@ -6,8 +6,10 @@ let tests =
   >::: [
          ("a trivial test" >:: fun _ -> assert_equal 0 0);
          (*Basic Behavior Tests*)
-         ( "Initialization of Register Array" >:: fun _ ->
-           assert_equal (Array.make 32 0) registers );
+         (*the global array [registers] has been deprecated. it's been moved to 
+          [cpu_state]*)
+         (* ( "Initialization of Register Array" >:: fun _ ->
+           assert_equal (Array.make 32 0) registers ); *)
          ( "Converting a type string to a type Instruction" >:: fun _ ->
            let stringOfInst = "add x1, x2, x3" in
            let inst = convert_str_to_instr stringOfInst in
