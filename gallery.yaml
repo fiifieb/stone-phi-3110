@@ -1,0 +1,32 @@
+---
+# Members of your group.
+group:  
+  - name: Ambrose Blay
+    netid: ab2838
+  - name: Marco Ross
+    netid: mdr253
+  - name: Fiifi Botchway
+    netid: feb49
+  - name: Matthew Laterza
+    netid: mvl32
+
+# Your PM.
+pm:
+  name: Dylan Vig
+  netid: drv36
+# Set to false if you don't want your gallery entry to be public.
+publish: true
+# Pithy title
+title: "Risc-V Emulator"
+# OK if this is a Cornell Github link, but public gallery viewers won't be able to see it.
+git-repo: "https://github.com/fiifieb/stone-phi-3110"
+# Replace the URL with your own demo video.
+demo-video-url: ""
+# Write a short, attention-grabbing description of your project.
+desc: >
+  A RISC-V assembly emulator built from the ground up in OCaml, designed to parse, decode, 
+  and execute real RISC-V instructions in a clean, modular pipeline. Our system loads 
+  text-based assembly programs, simulates register and program-counter state, 
+  and executes arithmetic, logic, move, shift, and immediate operations according to 
+  the RISC-V specification. Users can supply initial register values, step through instruction execution, 
+  and observe register changes in real time through a command-line interface.
