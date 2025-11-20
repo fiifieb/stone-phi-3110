@@ -21,7 +21,7 @@ title: "Risc-V Emulator"
 # OK if this is a Cornell Github link, but public gallery viewers won't be able to see it.
 git-repo: "https://github.com/fiifieb/stone-phi-3110"
 # Replace the URL with your own demo video.
-demo-video-url: ""
+demo-video-url: "https://youtu.be/hRjCLkG06L4"
 # Write a short, attention-grabbing description of your project.
 desc: >
   A RISC-V assembly emulator built from the ground up in OCaml, designed to parse, decode, 
