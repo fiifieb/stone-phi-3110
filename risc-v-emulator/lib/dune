@@ -1,2 +1,3 @@
 (library
- (name risc_v_emulator))
+ (name risc_v_emulator)
+ (instrumentation (backend bisect_ppx)))
