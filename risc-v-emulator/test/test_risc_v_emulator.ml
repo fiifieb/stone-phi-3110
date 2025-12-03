@@ -60,6 +60,7 @@ let tests =
                  src2 = None;
                  imm = Some 10;
                  alu = ADD_OP;
+                 branch = None;
                };
                {
                  dst = Some 1;
@@ -67,6 +68,7 @@ let tests =
                  src2 = None;
                  imm = None;
                  alu = PASS_OP;
+                 branch = None;
                };
                {
                  dst = Some 3;
@@ -74,6 +76,7 @@ let tests =
                  src2 = Some 2;
                  imm = None;
                  alu = SUB_OP;
+                 branch = None;
                };
              ]
            in
