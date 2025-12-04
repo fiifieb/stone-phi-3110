@@ -1,4 +1,4 @@
-open Risc_v_emulator.Logic
+open Risc_v_emulator
 
 (*Prints the contents of [registers] in the format "x[index] = [value]"*)
 let print_registers regs =
@@ -36,7 +36,7 @@ let parse_irv line : (int * int) list =
   [cpu_state.regs] = the array of registers including initial values specified
   in [lines], and [cpu_state.instrs] is the array of instructions created from
   [lines]*)
-let cpu_init (lines : string list) : cpu_state =
+let cpu_init (lines : string list) : Logic.cpu_state =
   match lines with
   | [] -> failwith "empty input file"
   | irv :: instructions ->
@@ -47,7 +47,7 @@ let cpu_init (lines : string list) : cpu_state =
           if r < 0 || r > 31 then failwith "Register out of range"
           else registers.(r) <- v)
         initial_vals;
-      let instruction_list = make_instructions instructions in
+      let instruction_list = Logic.make_instructions instructions in
       let instruction_array = Array.of_list instruction_list in
       {
         pc = Array.length instruction_array;
@@ -81,9 +81,9 @@ let () =
   let lines =
     raw_lines |> List.map String.trim
     |> List.filter (fun line ->
-        line <> "" && not (String.starts_with ~prefix:"#" line))
+           line <> "" && not (String.starts_with ~prefix:"#" line))
   in
   let cpu = cpu_init lines in
-  run cpu;
-  Printf.printf "Register Contents:\n";
-  print_registers cpu.regs
+  Gui.cpu_ref := Some cpu;
+  let gui, _labels, _pc_label = Gui.init_gui () in
+  Bogue.Main.run gui

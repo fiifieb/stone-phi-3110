@@ -1,2 +1,2 @@
 (library
- (name risc_v_emulator))
+ (name risc_v_emulator)(modules logic gui)(libraries  bogue))

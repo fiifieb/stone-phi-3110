@@ -115,7 +115,7 @@ type decoded = {
   src2 : int option;
   imm : int option;
   alu : alu_op;
-  branch : (string) option;
+  branch : string option;
 }
 (** A [decoded] value represents the micro-operation obtained after decoding a
     single instruction:
@@ -191,44 +191,44 @@ let convert_str_to_instr (input : string) : instruction =
             op2 = Register (parse_register o2);
             op3 = Value (int_of_string o3);
           }
-        | ("and" | "or" | "xor"), [ o1; o2; o3 ] ->
-            {
-              name =
-                (match lname with
-                | "and" -> And
-                | "or" -> Or
-                | "xor" -> Xor
-                | _ -> failwith "unsupported instruction");
-              op1 = Register (parse_register o1);
-              op2 = Register (parse_register o2);
-              op3 = Register (parse_register o3);
-            }
-        | ("andi" | "ori" | "xori"), [ o1; o2; o3 ] ->
-            {
-              name =
-                (match lname with
-                | "andi" -> Andi
-                | "ori" -> Ori
-                | "xori" -> Xori
-                | _ -> failwith "unsupported instruction");
-              op1 = Register (parse_register o1);
-              op2 = Register (parse_register o2);
-              op3 = Value (int_of_string o3);
-            }
-        | "jal", [ o1; o2 ] ->
-            {
-              name = Jal;
-              op1 = Register (parse_register o1);
-              op2 = None;
-              op3 = Value (int_of_string o2);
-            }
-        | "jalr", [ o1; o2; o3 ] ->
-            {
-              name = Jalr;
-              op1 = Register (parse_register o1);
-              op2 = Register (parse_register o2);
-              op3 = Value (int_of_string o3);
-            }
+      | ("and" | "or" | "xor"), [ o1; o2; o3 ] ->
+          {
+            name =
+              (match lname with
+              | "and" -> And
+              | "or" -> Or
+              | "xor" -> Xor
+              | _ -> failwith "unsupported instruction");
+            op1 = Register (parse_register o1);
+            op2 = Register (parse_register o2);
+            op3 = Register (parse_register o3);
+          }
+      | ("andi" | "ori" | "xori"), [ o1; o2; o3 ] ->
+          {
+            name =
+              (match lname with
+              | "andi" -> Andi
+              | "ori" -> Ori
+              | "xori" -> Xori
+              | _ -> failwith "unsupported instruction");
+            op1 = Register (parse_register o1);
+            op2 = Register (parse_register o2);
+            op3 = Value (int_of_string o3);
+          }
+      | "jal", [ o1; o2 ] ->
+          {
+            name = Jal;
+            op1 = Register (parse_register o1);
+            op2 = None;
+            op3 = Value (int_of_string o2);
+          }
+      | "jalr", [ o1; o2; o3 ] ->
+          {
+            name = Jalr;
+            op1 = Register (parse_register o1);
+            op2 = Register (parse_register o2);
+            op3 = Value (int_of_string o3);
+          }
       | _, _ -> failwith ("Wrong number of operands for instruction: " ^ name))
 
 (** [make_instructions lst] converts a list of instruction strings [lst] into a
@@ -315,7 +315,12 @@ let decode (inst : instruction) : decoded =
         src1 = reg_of_operand inst.op2;
         src2 = reg_of_operand inst.op3;
         imm = None;
-        alu = (match inst.name with And -> AND_OP | Or -> OR_OP | Xor -> XOR_OP | _ -> PASS_OP);
+        alu =
+          (match inst.name with
+          | And -> AND_OP
+          | Or -> OR_OP
+          | Xor -> XOR_OP
+          | _ -> PASS_OP);
         branch = None;
       }
   | Andi | Ori | Xori ->
@@ -324,7 +329,12 @@ let decode (inst : instruction) : decoded =
         src1 = reg_of_operand inst.op2;
         src2 = None;
         imm = imm_of_operand inst.op3;
-        alu = (match inst.name with Andi -> AND_OP | Ori -> OR_OP | Xori -> XOR_OP | _ -> PASS_OP);
+        alu =
+          (match inst.name with
+          | Andi -> AND_OP
+          | Ori -> OR_OP
+          | Xori -> XOR_OP
+          | _ -> PASS_OP);
         branch = None;
       }
   | Mv ->
@@ -336,14 +346,18 @@ let decode (inst : instruction) : decoded =
         alu = PASS_OP;
         branch = None;
       }
-
   | Slli | Srli | Srai ->
       {
         dst = reg_of_operand inst.op1;
         src1 = reg_of_operand inst.op2;
         src2 = None;
         imm = imm_of_operand inst.op3;
-        alu = (match inst.name with Slli -> SLL_OP | Srli -> SRL_OP | Srai -> SRA_OP | _ -> PASS_OP);
+        alu =
+          (match inst.name with
+          | Slli -> SLL_OP
+          | Srli -> SRL_OP
+          | Srai -> SRA_OP
+          | _ -> PASS_OP);
         branch = None;
       }
   | Beq | Bne | Blt | Bge ->
@@ -353,13 +367,14 @@ let decode (inst : instruction) : decoded =
         src2 = reg_of_operand inst.op2;
         imm = imm_of_operand inst.op3;
         alu = PASS_OP;
-        branch = Some
-          (match inst.name with
-          | Beq -> "beq"
-          | Bne -> "bne"
-          | Blt -> "blt"
-          | Bge -> "bge"
-          | _ -> "")
+        branch =
+          Some
+            (match inst.name with
+            | Beq -> "beq"
+            | Bne -> "bne"
+            | Blt -> "blt"
+            | Bge -> "bge"
+            | _ -> "");
       }
   | Jal ->
       {
@@ -380,10 +395,10 @@ let decode (inst : instruction) : decoded =
         branch = Some "jalr";
       }
 
-(** [alu_execute op a b] performs the ALU operation [op] on operands [a] and
-    [b] and returns the resulting integer. For operations that ignore [b]
-    (e.g. [PASS_OP]) the value of [b] is unused. Shift amounts are masked to
-    the low 5 bits (0-31) to model RV32I behaviour. *)
+(** [alu_execute op a b] performs the ALU operation [op] on operands [a] and [b]
+    and returns the resulting integer. For operations that ignore [b] (e.g.
+    [PASS_OP]) the value of [b] is unused. Shift amounts are masked to the low 5
+    bits (0-31) to model RV32I behaviour. *)
 let alu_execute op a b =
   let shamt = b in
   let a32 = Int32.of_int a in
@@ -399,13 +414,15 @@ let alu_execute op a b =
   | XOR_OP -> Int32.to_int (Int32.logxor a32 b32)
   | PASS_OP -> Int32.to_int a32
 
-(** [exec_decoded cpu d] executes a decoded micro-op [d] on [cpu], writing
-    the result into the destination register if present. Writes to register 0
-    are ignored (x0 is hard-wired zero). *)
+(** [exec_decoded cpu d] executes a decoded micro-op [d] on [cpu], writing the
+    result into the destination register if present. Writes to register 0 are
+    ignored (x0 is hard-wired zero). *)
 let exec_decoded (cpu : cpu_state) (d : decoded) : unit =
   let regs = cpu.regs in
   let src1_val =
-    match d.src1 with Some i -> regs.(i) | None -> failwith "src1 missing"
+    match d.src1 with
+    | Some i -> regs.(i)
+    | None -> failwith "src1 missing"
   in
   let src2_val =
     match (d.src2, d.imm) with
@@ -419,15 +436,15 @@ let exec_decoded (cpu : cpu_state) (d : decoded) : unit =
   | Some dst -> regs.(dst) <- result
   | None -> ()
 
-(** [exec_instruction cpu inst] decodes and executes a single instruction
-    [inst] on [cpu]. *)
+(** [exec_instruction cpu inst] decodes and executes a single instruction [inst]
+    on [cpu]. *)
 let exec_instruction (cpu : cpu_state) (inst : instruction) : unit =
   let d = decode inst in
   exec_decoded cpu d
 
-(** [run cpu] executes all instructions in [cpu.instrs] sequentially in
-    program order. After completion, [cpu.pc] is set to the number of
-    instructions executed. *)
+(** [run cpu] executes all instructions in [cpu.instrs] sequentially in program
+    order. After completion, [cpu.pc] is set to the number of instructions
+    executed. *)
 let run (cpu : cpu_state) : unit =
   let len = Array.length cpu.instrs in
   let i = ref 0 in
@@ -436,17 +453,25 @@ let run (cpu : cpu_state) : unit =
     let inst = cpu.instrs.(!i) in
     let d = decode inst in
     match d.branch with
-    | Some b ->
+    | Some b -> (
         let regs = cpu.regs in
-        (match b with
+        match b with
         | "beq" | "bne" | "blt" | "bge" ->
             let v1 =
-              match d.src1 with Some r -> regs.(r) | None -> failwith "branch missing src1"
+              match d.src1 with
+              | Some r -> regs.(r)
+              | None -> failwith "branch missing src1"
             in
             let v2 =
-              match d.src2 with Some r -> regs.(r) | None -> failwith "branch missing src2"
+              match d.src2 with
+              | Some r -> regs.(r)
+              | None -> failwith "branch missing src2"
             in
-            let offset = match d.imm with Some n -> n | None -> failwith "branch missing imm" in
+            let offset =
+              match d.imm with
+              | Some n -> n
+              | None -> failwith "branch missing imm"
+            in
             let take =
               match b with
               | "beq" -> v1 = v2
@@ -457,21 +482,37 @@ let run (cpu : cpu_state) : unit =
             in
             if take then i := !i + offset else i := !i + 1
         | "jal" ->
-            let offset = match d.imm with Some n -> n | None -> failwith "jal missing imm" in
+            let offset =
+              match d.imm with
+              | Some n -> n
+              | None -> failwith "jal missing imm"
+            in
             (match d.dst with
             | Some 0 -> ()
-            | Some dst -> regs.(dst) <- (!i + 1)
+            | Some dst -> regs.(dst) <- !i + 1
             | None -> ());
             i := !i + offset
         | "jalr" ->
-            let base = match d.src1 with Some r -> regs.(r) | None -> failwith "jalr missing src1" in
-            let offset = match d.imm with Some n -> n | None -> failwith "jalr missing imm" in
+            let base =
+              match d.src1 with
+              | Some r -> regs.(r)
+              | None -> failwith "jalr missing src1"
+            in
+            let offset =
+              match d.imm with
+              | Some n -> n
+              | None -> failwith "jalr missing imm"
+            in
             (match d.dst with
             | Some 0 -> ()
-            | Some dst -> regs.(dst) <- (!i + 1)
+            | Some dst -> regs.(dst) <- !i + 1
             | None -> ());
-            i := (base + offset)
+            i := base + offset
         | _ -> i := !i + 1)
-    | None -> exec_decoded cpu d; i := !i + 1
+    | None ->
+        exec_decoded cpu d;
+        i := !i + 1
   done;
   cpu.pc <- !i
+
+let step (cpu : cpu_state) : unit = failwith "unimplemented"
