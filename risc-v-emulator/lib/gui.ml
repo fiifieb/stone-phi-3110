@@ -9,8 +9,8 @@ let initial_regs : int array ref = ref [||]
 
 let create_labels () =
   Array.init 32 (fun i ->
-      let text = Printf.sprintf "x%-2d = %-10d" i 0 in
-      Widget.label text)
+      let text = Printf.sprintf "x%02d: %10d   " i 0 in
+      Widget.label ~size:11 text)
 
 let create_instr_labels () =
   match !cpu_ref with
@@ -19,14 +19,14 @@ let create_instr_labels () =
       Array.mapi
         (fun i instr_str ->
           let prefix = if i = cpu.pc then "-> " else "   " in
-          let text = Printf.sprintf "%s%d: %s" prefix i instr_str in
+          let text = Printf.sprintf "%s%03d: %-40s" prefix i instr_str in
           Widget.label text)
         cpu.instr_strings
 
 let create_mem_labels () =
   Array.init 32 (fun i ->
-      let text = Printf.sprintf "[%4d]: %8d" 0 0 in
-      Widget.label ~size:11 text)
+      let text = Printf.sprintf "[%06d]: %12d  " 0 0 in
+      Widget.label ~size:12 text)
 
 let update_mem_labels () =
   let labels = !mem_labels in
@@ -39,7 +39,7 @@ let update_mem_labels () =
         | Some v -> v
         | None -> 0
       in
-      let text = Printf.sprintf "[%4d]: %8d" addr value in
+      let text = Printf.sprintf "[%06d]: %12d  " addr value in
       Widget.set_text label text)
     labels
 
@@ -49,9 +49,10 @@ let update_labels labels pc_label =
   | Some cpu ->
       Array.iteri
         (fun i label ->
-          Widget.set_text label (Printf.sprintf "x%-2d = %-10d" i cpu.regs.(i)))
+          let text = Printf.sprintf "x%02d: %10d   " i cpu.regs.(i) in
+          Widget.set_text label text)
         labels;
-      Widget.set_text pc_label (Printf.sprintf "PC = %d" cpu.pc)
+      Widget.set_text pc_label (Printf.sprintf "PC: %08d" cpu.pc)
 
 let update_instr_colors instr_labels =
   match !cpu_ref with
@@ -62,7 +63,9 @@ let update_instr_colors instr_labels =
           let prefix =
             if i = cpu.pc then "-> " else if i = !prev_pc then " * " else "   "
           in
-          let text = Printf.sprintf "%s%d: %s" prefix i cpu.instr_strings.(i) in
+          let text =
+            Printf.sprintf "%s%03d: %-40s" prefix i cpu.instr_strings.(i)
+          in
           Widget.set_text label text)
         instr_labels
 
@@ -119,14 +122,17 @@ let init_gui () =
         Layout.flat_of_w row_widgets)
   in
   let register_layout = Layout.tower (Array.to_list rows) in
-  let pc_label = Widget.label ~size:15 "PC = 0" in
+  let pc_label = Widget.label ~size:15 "PC: 00000000 " in
 
   let instr_layout =
     if Array.length instr_labels = 0 then
       Layout.resident (Widget.label "No instructions")
     else
-      Layout.tower
-        (instr_labels |> Array.to_list |> List.map (fun w -> Layout.resident w))
+      let instr_widgets =
+        instr_labels |> Array.to_list |> List.map (fun w -> Layout.resident w)
+      in
+      (* Clip to a fixed height, e.g., 400px *)
+      Layout.make_clip ~h:400 (Layout.tower instr_widgets)
   in
 
   let step_button = Widget.button "Step" in
@@ -147,9 +153,9 @@ let init_gui () =
   in
 
   (* Memory view section *)
-  let mem_title = Widget.label ~size:15 "Memory View" in
-  let mem_offset_label = Widget.label "Memory Offset:" in
-  let mem_offset_input = Widget.text_input ~text:"0" () in
+  let mem_title = Widget.label ~size:15 "Memory View " in
+  let mem_offset_label = Widget.label "Memory Offset:  " in
+  let mem_offset_input = Widget.text_input ~size:15 ~text:"0" () in
   let mem_update_button = Widget.button "Update" in
 
   (* Update memory offset when button clicked *)
