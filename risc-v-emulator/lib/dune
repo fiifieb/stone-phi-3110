@@ -1,2 +1,8 @@
 (library
+<<<<<<< HEAD
+ (name risc_v_emulator)
+ (libraries Stdint)
+ (instrumentation (backend bisect_ppx)))
+=======
  (name risc_v_emulator)(modules logic gui)(libraries  bogue))
+>>>>>>> refs/remotes/origin/main

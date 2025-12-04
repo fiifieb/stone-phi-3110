@@ -226,8 +226,6 @@ let tests =
            in
            let () = run state in
            assert_equal 0 state.regs.(1) );
-         (*Test 2-4 permutations of instructions meant to be complicated in some
-           manner*)
        ]
 
 let _ = run_test_tt_main tests
