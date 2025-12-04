@@ -1,3 +1,4 @@
 (library
  (name risc_v_emulator)
+ (libraries Stdint)
  (instrumentation (backend bisect_ppx)))
