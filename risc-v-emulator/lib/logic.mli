@@ -112,3 +112,6 @@ val step : cpu_state -> unit
 val get_from_mem : int -> int option
 (** [get_from_mem addr] retrieves the value stored at memory address [addr].
     Returns [None] if the address has not been written to. *)
+
+val main_mem : (int, int) Hashtbl.t
+(** [main_mem] is the hash table representing main memory. *)
