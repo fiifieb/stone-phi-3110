@@ -108,3 +108,7 @@ val run : cpu_state -> unit
 val step : cpu_state -> unit
 (** [step cpu] executes a single instruction at [cpu.pc] and updates [cpu.pc]
     accordingly. *)
+
+val get_from_mem : int -> int option
+(** [get_from_mem addr] retrieves the value stored at memory address [addr].
+    Returns [None] if the address has not been written to. *)
