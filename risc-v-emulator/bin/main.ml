@@ -86,6 +86,8 @@ let () =
   in
   let cpu = cpu_init lines in
   Gui.cpu_ref := Some cpu;
+  (* Save initial register state for reset *)
+  Gui.initial_regs := Array.copy cpu.regs;
   let gui, labels, pc_label, instr_labels = Gui.init_gui () in
   Gui.update_labels labels pc_label;
   Gui.update_instr_colors instr_labels;
