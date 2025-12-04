@@ -7,11 +7,14 @@ let mem_offset : int ref = ref 0
 let mem_labels : Widget.t array ref = ref [||]
 let initial_regs : int array ref = ref [||]
 
+(** Creates an array of labels for the 32 registers with their initial values.
+*)
 let create_labels () =
   Array.init 32 (fun i ->
       let text = Printf.sprintf "x%02d: %10d   " i 0 in
-      Widget.label ~size:11 text)
+      Widget.label ~size:12 text)
 
+(** Creates an array of labels for the instructions. *)
 let create_instr_labels () =
   match !cpu_ref with
   | None -> [||]
@@ -23,11 +26,13 @@ let create_instr_labels () =
           Widget.label text)
         cpu.instr_strings
 
+(** Creates an array of labels for memory display with initial values of 0. *)
 let create_mem_labels () =
   Array.init 32 (fun i ->
       let text = Printf.sprintf "[%06d]: %12d  " 0 0 in
       Widget.label ~size:12 text)
 
+(** Updates memory labels based on current memory contents and offset.*)
 let update_mem_labels () =
   let labels = !mem_labels in
   let offset = !mem_offset in
@@ -43,6 +48,7 @@ let update_mem_labels () =
       Widget.set_text label text)
     labels
 
+(** Updates register labels and PC label with the current CPU state. *)
 let update_labels labels pc_label =
   match !cpu_ref with
   | None -> ()
@@ -54,6 +60,7 @@ let update_labels labels pc_label =
         labels;
       Widget.set_text pc_label (Printf.sprintf "PC: %08d" cpu.pc)
 
+(** Updates instruction labels to indicate current and previous PC*)
 let update_instr_colors instr_labels =
   match !cpu_ref with
   | None -> ()
@@ -69,6 +76,7 @@ let update_instr_colors instr_labels =
           Widget.set_text label text)
         instr_labels
 
+(** Executes a single CPU step and updates relevant labels. *)
 let on_step labels pc_label instr_labels =
   match !cpu_ref with
   | None -> ()
@@ -80,6 +88,7 @@ let on_step labels pc_label instr_labels =
         update_instr_colors instr_labels;
         update_mem_labels ())
 
+(** Executes entire CPU and updates relevant labels. *)
 let on_run labels pc_label instr_labels =
   match !cpu_ref with
   | None -> ()
@@ -90,6 +99,7 @@ let on_run labels pc_label instr_labels =
       update_instr_colors instr_labels;
       update_mem_labels ()
 
+(** Resets CPU state, registers, memory, and updates all GUI labels. *)
 let on_reset labels pc_label instr_labels =
   match !cpu_ref with
   | None -> ()
@@ -107,7 +117,11 @@ let on_reset labels pc_label instr_labels =
       update_labels labels pc_label;
       update_instr_colors instr_labels;
       update_mem_labels ()
-
+(** Initializes the GUI and returns a tuple:
+    - the main Bogue board,
+    - the array of register labels,
+    - the PC label widget,
+    - the array of instruction labels. *)
 let init_gui () =
   let labels = create_labels () in
   let instr_labels = create_instr_labels () in
@@ -131,7 +145,6 @@ let init_gui () =
       let instr_widgets =
         instr_labels |> Array.to_list |> List.map (fun w -> Layout.resident w)
       in
-      (* Clip to a fixed height, e.g., 400px *)
       Layout.make_clip ~h:400 (Layout.tower instr_widgets)
   in
 
