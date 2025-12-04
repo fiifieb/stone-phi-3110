@@ -49,7 +49,12 @@ let cpu_init (lines : string list) : Logic.cpu_state =
         initial_vals;
       let instruction_list = Logic.make_instructions instructions in
       let instruction_array = Array.of_list instruction_list in
-      { pc = 0; regs = registers; instrs = instruction_array }
+      {
+        pc = 0;
+        regs = registers;
+        instrs = instruction_array;
+        instr_strings = Array.of_list instructions;
+      }
 
 (*Reads contents from [file] and returns a list of strings*)
 let read_lines file =
@@ -81,6 +86,7 @@ let () =
   in
   let cpu = cpu_init lines in
   Gui.cpu_ref := Some cpu;
-  let gui, labels, pc_label = Gui.init_gui () in
+  let gui, labels, pc_label, instr_labels = Gui.init_gui () in
   Gui.update_labels labels pc_label;
+  Gui.update_instr_colors instr_labels;
   Bogue.Main.run gui

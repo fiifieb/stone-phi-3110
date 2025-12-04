@@ -102,12 +102,15 @@ type cpu_state = {
   mutable pc : int;
   regs : int array;
   instrs : instruction array;
+  instr_strings : string array;
 }
 (** A [cpu_state] bundles all mutable processor state needed by the emulator:
     - [pc] holds the index of the next instruction to execute in [instrs].
     - [regs] is the register file (32 general-purpose integer registers).
     - [instrs] is the program loaded into the emulator as an array of parsed
-      instructions. *)
+      instructions.
+    - [instr_strings] holds the original string representation of each
+      instruction for display purposes. *)
 
 type decoded = {
   dst : int option;
@@ -521,7 +524,7 @@ let run (cpu : cpu_state) : unit =
     array. *)
 let step (cpu : cpu_state) : unit =
   let len = Array.length cpu.instrs in
-  if cpu.pc < len then (
+  if cpu.pc < len then
     let inst = cpu.instrs.(cpu.pc) in
     let d = decode inst in
     match d.branch with
@@ -583,4 +586,4 @@ let step (cpu : cpu_state) : unit =
         | _ -> cpu.pc <- cpu.pc + 1)
     | None ->
         exec_decoded cpu d;
-        cpu.pc <- cpu.pc + 1)
+        cpu.pc <- cpu.pc + 1
