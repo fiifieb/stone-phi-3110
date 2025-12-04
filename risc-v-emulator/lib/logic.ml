@@ -316,33 +316,6 @@ let convert_str_to_instr (input : string) : instruction =
             op2 = Register (parse_register o2);
             op3 = Value (int_of_string o3);
           }
-<<<<<<< HEAD
-      | ("lw" | "lb" | "ld"), [o1; o2] -> 
-          {
-            name =
-              (match lname with
-              | "lw" -> LW
-              | "lb" -> LB
-              | "ld" -> LD
-              | _ -> failwith "unsupported instruction");
-            op1 = Register (parse_register o1);
-            op2 = Register (mem_id (parse_register_for_mem o2));
-            op3 = Value (offset_amount (parse_register_for_mem o2));
-          }
-      | ("sw" | "sb" | "sd"), [o1; o2] -> 
-          {
-            name =
-              (match lname with
-              | "sw" -> SW
-              | "sb" -> SB
-              | "sd" -> SD
-              | _ -> failwith "unsupported instruction");
-            op1 = Register (parse_register o1);
-            op2 = Register (mem_id (parse_register_for_mem o2));
-            op3 = Value (offset_amount (parse_register_for_mem o2));
-          }
-=======
->>>>>>> refs/remotes/origin/main
       | _, _ -> failwith ("Wrong number of operands for instruction: " ^ name))
 
 (** [make_instructions lst] converts a list of instruction strings [lst] into a
@@ -539,12 +512,7 @@ let decode (inst : instruction) : decoded =
     and returns the resulting integer. For operations that ignore [b] (e.g.
     [PASS_OP]) the value of [b] is unused. Shift amounts are masked to the low 5
     bits (0-31) to model RV32I behaviour. *)
-<<<<<<< HEAD
-let alu_execute op a b ?copt =
-  let c = Option.value copt in
-=======
 let alu_execute op a b =
->>>>>>> refs/remotes/origin/main
   let shamt = b in
   let a8 = a land 0b11111111 in
   let b8 = b land 0b11111111 in
@@ -564,7 +532,7 @@ let alu_execute op a b =
   | PASS_OP -> Int32.to_int a32
   (** TODO: Implement memory logic *)
   | LOAD8_OP -> a8 
-  | STORE8_OP -> let () = add_to_mem (c + b8) a in 0
+  | STORE8_OP -> let () = add_to_mem (a + b8) a in 0
   | LOAD32_OP -> Int32.to_int a32
   | STORE32_OP -> Int32.to_int b32 
   | LOAD64_OP -> Int64.to_int a64 

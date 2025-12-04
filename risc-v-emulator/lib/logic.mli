@@ -24,6 +24,12 @@ type instr_type =
   | Xori
   | Jal
   | Jalr
+  | LW
+  | LB
+  | LD
+  | SW
+  | SB
+  | SD
 
 (** An [operand] represents one operand of a RISC-V instruction. *)
 type operand =
@@ -42,6 +48,12 @@ type alu_op =
   | AND_OP
   | OR_OP
   | XOR_OP
+  | LOAD8_OP
+  | STORE8_OP
+  | LOAD32_OP
+  | STORE32_OP
+  | LOAD64_OP
+  | STORE64_OP
 
 type instruction = {
   name : instr_type;
