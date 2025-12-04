@@ -11,7 +11,7 @@ let initial_regs : int array ref = ref [||]
 *)
 let create_labels () =
   Array.init 32 (fun i ->
-      let text = Printf.sprintf "x%02d: %10d   " i 0 in
+      let text = Printf.sprintf "x%02d:%10d         " i 0 in
       Widget.label ~size:12 text)
 
 (** Creates an array of labels for the instructions. *)
@@ -55,7 +55,7 @@ let update_labels labels pc_label =
   | Some cpu ->
       Array.iteri
         (fun i label ->
-          let text = Printf.sprintf "x%02d: %10d   " i cpu.regs.(i) in
+          let text = Printf.sprintf "x%02d:%10d         " i cpu.regs.(i) in
           Widget.set_text label text)
         labels;
       Widget.set_text pc_label (Printf.sprintf "PC: %08d" cpu.pc)
