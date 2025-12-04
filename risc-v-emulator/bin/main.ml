@@ -72,11 +72,40 @@ let read_lines file =
     exit 1
 
 let () =
+  let usage =
+    "Usage: dune exec -- risc-v-emulator -- [--ui terminal|graphical] <file.s>\n\
+    \       or: dune exec -- risc-v-emulator -- -t <file.s>\n\
+    \       or: dune exec -- risc-v-emulator -- -g <file.s>\n\
+    \       or: dune exec -- risc-v-emulator -- <file.s>"
+  in
+
   if Array.length Sys.argv < 2 then (
-    prerr_endline "Usage: dune exec risc-v-emulator -- <file.s>";
+    prerr_endline usage;
     exit 1);
 
-  let filename = Sys.argv.(1) in
+  let ui_mode, filename =
+    match Sys.argv.(1) with
+    | "--ui" ->
+        if Array.length Sys.argv < 4 then (
+          prerr_endline "Not enough arguments for --ui";
+          prerr_endline usage;
+          exit 1)
+        else (Sys.argv.(2), Sys.argv.(3))
+    | "-t" ->
+        if Array.length Sys.argv < 3 then (
+          prerr_endline "Missing filename for -t";
+          prerr_endline usage;
+          exit 1)
+        else ("terminal", Sys.argv.(2))
+    | "-g" ->
+        if Array.length Sys.argv < 3 then (
+          prerr_endline "Missing filename for -g";
+          prerr_endline usage;
+          exit 1)
+        else ("graphical", Sys.argv.(2))
+    | fname -> ("terminal", fname)
+  in
+
   let raw_lines = read_lines filename in
   let lines =
     raw_lines |> List.map String.trim
@@ -84,6 +113,17 @@ let () =
         line <> "" && not (String.starts_with ~prefix:"#" line))
   in
   let cpu = cpu_init lines in
-  run cpu;
+
+  (match ui_mode with
+  | "terminal" -> run cpu
+  | "graphical" ->
+      prerr_endline
+        "Graphical UI selected but not yet implemented; falling back to \
+         terminal UI.";
+      run cpu
+  | _ ->
+      prerr_endline ("Unknown UI mode: " ^ ui_mode);
+      exit 1);
+
   Printf.printf "Register Contents:\n";
   print_registers cpu.regs
