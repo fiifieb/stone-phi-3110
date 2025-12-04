@@ -22,8 +22,9 @@ let on_step labels pc_label =
   match !cpu_ref with
   | None -> ()
   | Some cpu ->
-      step cpu;
-      update_labels labels pc_label
+      if cpu.pc < Array.length cpu.instrs then (
+        step cpu;
+        update_labels labels pc_label)
 
 let on_run labels pc_label =
   match !cpu_ref with
