@@ -1,4 +1,4 @@
 (executable
  (public_name risc-v-emulator)
  (name main)
- (libraries risc_v_emulator))
+ (libraries risc_v_emulator bogue))

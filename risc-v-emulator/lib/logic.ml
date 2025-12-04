@@ -186,12 +186,15 @@ type cpu_state = {
   mutable pc : int;
   regs : int array;
   instrs : instruction array;
+  instr_strings : string array;
 }
 (** A [cpu_state] bundles all mutable processor state needed by the emulator:
     - [pc] holds the index of the next instruction to execute in [instrs].
     - [regs] is the register file (32 general-purpose integer registers).
     - [instrs] is the program loaded into the emulator as an array of parsed
-      instructions. *)
+      instructions.
+    - [instr_strings] holds the original string representation of each
+      instruction for display purposes. *)
 
 type decoded = {
   dst : int option;
@@ -313,6 +316,7 @@ let convert_str_to_instr (input : string) : instruction =
             op2 = Register (parse_register o2);
             op3 = Value (int_of_string o3);
           }
+<<<<<<< HEAD
       | ("lw" | "lb" | "ld"), [o1; o2] -> 
           {
             name =
@@ -337,6 +341,8 @@ let convert_str_to_instr (input : string) : instruction =
             op2 = Register (mem_id (parse_register_for_mem o2));
             op3 = Value (offset_amount (parse_register_for_mem o2));
           }
+=======
+>>>>>>> refs/remotes/origin/main
       | _, _ -> failwith ("Wrong number of operands for instruction: " ^ name))
 
 (** [make_instructions lst] converts a list of instruction strings [lst] into a
@@ -533,8 +539,12 @@ let decode (inst : instruction) : decoded =
     and returns the resulting integer. For operations that ignore [b] (e.g.
     [PASS_OP]) the value of [b] is unused. Shift amounts are masked to the low 5
     bits (0-31) to model RV32I behaviour. *)
+<<<<<<< HEAD
 let alu_execute op a b ?copt =
   let c = Option.value copt in
+=======
+let alu_execute op a b =
+>>>>>>> refs/remotes/origin/main
   let shamt = b in
   let a8 = a land 0b11111111 in
   let b8 = b land 0b11111111 in
@@ -660,3 +670,73 @@ let run (cpu : cpu_state) : unit =
         i := !i + 1
   done;
   cpu.pc <- !i
+
+(** [step cpu] executes a single instruction at [cpu.pc]. Updates [cpu.pc] to
+    point to the next instruction (or beyond the end if execution is complete).
+    Does nothing if [cpu.pc] is already at or beyond the end of the instruction
+    array. *)
+let step (cpu : cpu_state) : unit =
+  let len = Array.length cpu.instrs in
+  if cpu.pc < len then
+    let inst = cpu.instrs.(cpu.pc) in
+    let d = decode inst in
+    match d.branch with
+    | Some b -> (
+        let regs = cpu.regs in
+        match b with
+        | "beq" | "bne" | "blt" | "bge" ->
+            let v1 =
+              match d.src1 with
+              | Some r -> regs.(r)
+              | None -> failwith "branch missing src1"
+            in
+            let v2 =
+              match d.src2 with
+              | Some r -> regs.(r)
+              | None -> failwith "branch missing src2"
+            in
+            let offset =
+              match d.imm with
+              | Some n -> n
+              | None -> failwith "branch missing imm"
+            in
+            let take =
+              match b with
+              | "beq" -> v1 = v2
+              | "bne" -> v1 <> v2
+              | "blt" -> v1 < v2
+              | "bge" -> v1 >= v2
+              | _ -> false
+            in
+            if take then cpu.pc <- cpu.pc + offset else cpu.pc <- cpu.pc + 1
+        | "jal" ->
+            let offset =
+              match d.imm with
+              | Some n -> n
+              | None -> failwith "jal missing imm"
+            in
+            (match d.dst with
+            | Some 0 -> ()
+            | Some dst -> regs.(dst) <- cpu.pc + 1
+            | None -> ());
+            cpu.pc <- cpu.pc + offset
+        | "jalr" ->
+            let base =
+              match d.src1 with
+              | Some r -> regs.(r)
+              | None -> failwith "jalr missing src1"
+            in
+            let offset =
+              match d.imm with
+              | Some n -> n
+              | None -> failwith "jalr missing imm"
+            in
+            (match d.dst with
+            | Some 0 -> ()
+            | Some dst -> regs.(dst) <- cpu.pc + 1
+            | None -> ());
+            cpu.pc <- base + offset
+        | _ -> cpu.pc <- cpu.pc + 1)
+    | None ->
+        exec_decoded cpu d;
+        cpu.pc <- cpu.pc + 1

@@ -86,7 +86,12 @@ let tests =
            let inst = convert_str_to_instr stringOfInst in
            let registers = Array.make 32 0 in
            let (state : cpu_state) =
-             { pc = 1; regs = registers; instrs = [| inst |] }
+             {
+               pc = 1;
+               regs = registers;
+               instrs = [| inst |];
+               instr_strings = [| stringOfInst |];
+             }
            in
            if Array.length state.instrs = state.pc then
              assert_equal state.regs registers
@@ -117,7 +122,12 @@ let tests =
            registers.(2) <- 2;
            registers.(3) <- 3;
            let (state : cpu_state) =
-             { pc = 1; regs = registers; instrs = [| inst |] }
+             {
+               pc = 1;
+               regs = registers;
+               instrs = [| inst |];
+               instr_strings = [| stringOfInst |];
+             }
            in
            let () = run state in
            assert_equal 5 state.regs.(1) );
@@ -128,7 +138,12 @@ let tests =
            registers.(2) <- 3;
            registers.(3) <- 2;
            let (state : cpu_state) =
-             { pc = 1; regs = registers; instrs = [| inst |] }
+             {
+               pc = 1;
+               regs = registers;
+               instrs = [| inst |];
+               instr_strings = [| stringOfInst |];
+             }
            in
            let () = run state in
            assert_equal 1 state.regs.(1) );
@@ -141,7 +156,12 @@ let tests =
            registers.(2) <- -1;
            registers.(3) <- 32;
            let (state : cpu_state) =
-             { pc = 1; regs = registers; instrs = [| inst |] }
+             {
+               pc = 1;
+               regs = registers;
+               instrs = [| inst |];
+               instr_strings = [| stringOfInst |];
+             }
            in
            let () = run state in
            assert_equal 0 state.regs.(1) );
@@ -152,7 +172,12 @@ let tests =
            registers.(2) <- 1;
            registers.(3) <- 1;
            let (state : cpu_state) =
-             { pc = 1; regs = registers; instrs = [| inst |] }
+             {
+               pc = 1;
+               regs = registers;
+               instrs = [| inst |];
+               instr_strings = [| stringOfInst |];
+             }
            in
            let () = run state in
            assert_equal 2 state.regs.(1) );
@@ -163,7 +188,12 @@ let tests =
            registers.(2) <- -1;
            registers.(3) <- 1;
            let (state : cpu_state) =
-             { pc = 1; regs = registers; instrs = [| inst |] }
+             {
+               pc = 1;
+               regs = registers;
+               instrs = [| inst |];
+               instr_strings = [| stringOfInst |];
+             }
            in
            let () = run state in
            assert_equal (-1) state.regs.(1) );
@@ -172,7 +202,12 @@ let tests =
            let inst = convert_str_to_instr stringOfInst in
            let registers = Array.make 32 0 in
            let (state : cpu_state) =
-             { pc = 1; regs = registers; instrs = [| inst |] }
+             {
+               pc = 1;
+               regs = registers;
+               instrs = [| inst |];
+               instr_strings = [| stringOfInst |];
+             }
            in
            let () = run state in
            assert_equal 1 state.regs.(1) );
@@ -182,7 +217,12 @@ let tests =
            let registers = Array.make 32 0 in
            registers.(1) <- 5;
            let (state : cpu_state) =
-             { pc = 1; regs = registers; instrs = [| inst |] }
+             {
+               pc = 1;
+               regs = registers;
+               instrs = [| inst |];
+               instr_strings = [| stringOfInst |];
+             }
            in
            let () = run state in
            assert_equal 0 state.regs.(1) );
