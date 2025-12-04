@@ -71,62 +71,63 @@ let registers = Array.make 32 0
 (* We're gonna simulate main memory with a 
 hash table*)
 
-(** [main_mem] is our representation of memory, using a
-hash table to store ints*)
+(** [main_mem] is our representation of memory, using a hash table to store ints*)
 let main_mem = Hashtbl.create 4
 
-(** [key_create a] creates a key value associated with 
-a number, a*)
+(** [key_create a] creates a key value associated with a number, a*)
 let key_create = Hashtbl.hash
 
-(** [add_to_mem a data] creates a key with the value a
-to store data in the hash table*)
+(** [add_to_mem a data] creates a key with the value a to store data in the hash
+    table*)
 let add_to_mem (a : int) (data : int) =
   let key = key_create a in
   Hashtbl.add main_mem key data
 
-(** [get_from_mem] obtains the data tied to the key 
-created by calling key_create on a*)
+(** [get_from_mem] obtains the data tied to the key created by calling
+    key_create on a*)
 let get_from_mem (a : int) =
   let key = key_create a in
   Hashtbl.find_opt main_mem key
 
-(** [clean_for_mem s] is [clean s] except it replaces ( and ) with whitespaces. 
-This is so for load and store commands we can correct parse strings in the form
-of offset(rsn) *)
-let clean_for_mem (s : string) = 
-  s |> String.trim |> String.map (fun c -> if c = '(' || c = ')' then ' ' else c)
+(** [clean_for_mem s] is [clean s] except it replaces ( and ) with whitespaces.
+    This is so for load and store commands we can correct parse strings in the
+    form of offset(rsn) *)
+let clean_for_mem (s : string) =
+  s |> String.trim
+  |> String.map (fun c -> if c = '(' || c = ')' then ' ' else c)
 
-(** [parse_register_for_mem s] is like [parse_register s] but specialize to work 
-on the form offset(rsn), returns a tuple of the offset amount and register number*)
-let parse_register_for_mem (s : string) = 
-  if String.length s < 5 then failwith ("invalid offset form: " ^ s) 
+(** [parse_register_for_mem s] is like [parse_register s] but specialize to work
+    on the form offset(rsn), returns a tuple of the offset amount and register
+    number*)
+let parse_register_for_mem (s : string) =
+  if String.length s < 5 then failwith ("invalid offset form: " ^ s)
   else
-    let offset_idx_str = clean_for_mem s|> split_on_spaces in
+    let offset_idx_str = clean_for_mem s |> split_on_spaces in
     let offset = int_of_string (List.nth offset_idx_str 0) in
-    let idx = List.nth offset_idx_str 1 in 
-    let id = int_of_string ( String.sub idx 1 (String.length idx - 1)) in
-    (offset,id)
-let mem_id ((a,b) : int*int) : int = 
-  match (a,b) with
-  | (_,y) -> y
+    let idx = List.nth offset_idx_str 1 in
+    let id = int_of_string (String.sub idx 1 (String.length idx - 1)) in
+    (offset, id)
 
-let offset_amount ((a,b) : int*int) : int = 
-  match (a,b) with
-  | (x,_) -> x
+let mem_id ((a, b) : int * int) : int =
+  match (a, b) with
+  | _, y -> y
+
+let offset_amount ((a, b) : int * int) : int =
+  match (a, b) with
+  | x, _ -> x
 (* ----- Might be unneeded idk ----- *)
 
-(** [remove_from_mem] removes the data tied to the key 
-created by calling key_create on a*)
+(** [remove_from_mem] removes the data tied to the key created by calling
+    key_create on a*)
 let remove_from_mem (a : int) =
   let key = key_create a in
   Hashtbl.remove main_mem key
 
-(** [get_remove] gets and then removes the data 
-tied to the key created by calling key_create on a*)
-let get_remove (a : int) = 
-  let value = get_from_mem a in 
-  let () = remove_from_mem a in 
+(** [get_remove] gets and then removes the data tied to the key created by
+    calling key_create on a*)
+let get_remove (a : int) =
+  let value = get_from_mem a in
+  let () = remove_from_mem a in
   value
 
 (* ---------------------------------------- *)
@@ -147,7 +148,7 @@ type operand =
     - [SRL_OP] logical right shift
     - [SLL_OP] logical left shift
     - [SRA_OP] arithmetic right shift
-    - [PASS_OP] pass-through (used for [mv], returning the source register). 
+    - [PASS_OP] pass-through (used for [mv], returning the source register).
     - [LOAD8_OP] loading 8-bits from memory
     - [STORE8_OP] storing 8-bits to memory
     - [LOAD32_OP] loading 32-bits from memory
@@ -167,9 +168,9 @@ type alu_op =
   (* Memory Stuff *)
   | LOAD8_OP
   | STORE8_OP
-  | LOAD32_OP 
+  | LOAD32_OP
   | STORE32_OP
-  | LOAD64_OP 
+  | LOAD64_OP
   | STORE64_OP
 
 type instruction = {
@@ -315,6 +316,32 @@ let convert_str_to_instr (input : string) : instruction =
             op1 = Register (parse_register o1);
             op2 = Register (parse_register o2);
             op3 = Value (int_of_string o3);
+          }
+      | ("lw" | "lb" | "ld"), [ o1; o2 ] ->
+          let offset, reg = parse_register_for_mem o2 in
+          {
+            name =
+              (match lname with
+              | "lw" -> LW
+              | "lb" -> LB
+              | "ld" -> LD
+              | _ -> failwith "unsupported instruction");
+            op1 = Register (parse_register o1);
+            op2 = Register reg;
+            op3 = Value offset;
+          }
+      | ("sw" | "sb" | "sd"), [ o1; o2 ] ->
+          let offset, reg = parse_register_for_mem o2 in
+          {
+            name =
+              (match lname with
+              | "sw" -> SW
+              | "sb" -> SB
+              | "sd" -> SD
+              | _ -> failwith "unsupported instruction");
+            op1 = Register (parse_register o1);
+            op2 = Register reg;
+            op3 = Value offset;
           }
       | _, _ -> failwith ("Wrong number of operands for instruction: " ^ name))
 
@@ -481,26 +508,28 @@ let decode (inst : instruction) : decoded =
         alu = PASS_OP;
         branch = Some "jalr";
       }
-  | LW | LB | LD -> 
+  | LW | LB | LD ->
       {
         dst = reg_of_operand inst.op1;
         src1 = reg_of_operand inst.op2;
         src2 = None;
         imm = imm_of_operand inst.op3;
-        alu = (match inst.name with
+        alu =
+          (match inst.name with
           | LW -> LOAD8_OP
           | LB -> LOAD32_OP
           | LD -> LOAD64_OP
           | _ -> PASS_OP);
         branch = None;
       }
-  | SW | SB | SD -> 
+  | SW | SB | SD ->
       {
         dst = None;
         src1 = reg_of_operand inst.op2;
         src2 = reg_of_operand inst.op1;
         imm = imm_of_operand inst.op3;
-        alu = (match inst.name with
+        alu =
+          (match inst.name with
           | SW -> STORE8_OP
           | SB -> STORE32_OP
           | SD -> STORE64_OP
@@ -514,12 +543,8 @@ let decode (inst : instruction) : decoded =
     bits (0-31) to model RV32I behaviour. *)
 let alu_execute op a b =
   let shamt = b in
-  let a8 = a land 0b11111111 in
-  let b8 = b land 0b11111111 in
   let a32 = Int32.of_int a in
   let b32 = Int32.of_int b in
-  let a64 = Int64.of_int a in
-  let b64 = Int64.of_int b in
   match op with
   | ADD_OP -> Int32.to_int (Int32.add a32 b32)
   | SUB_OP -> Int32.to_int (Int32.sub a32 b32)
@@ -530,35 +555,76 @@ let alu_execute op a b =
   | OR_OP -> Int32.to_int (Int32.logor a32 b32)
   | XOR_OP -> Int32.to_int (Int32.logxor a32 b32)
   | PASS_OP -> Int32.to_int a32
-  (** TODO: Implement memory logic *)
-  | LOAD8_OP -> a8 
-  | STORE8_OP -> let () = add_to_mem (a + b8) a in 0
-  | LOAD32_OP -> Int32.to_int a32
-  | STORE32_OP -> Int32.to_int b32 
-  | LOAD64_OP -> Int64.to_int a64 
-  | STORE64_OP -> Int64.to_int b64 
+  (* Memory operations - these are handled specially in exec_decoded *)
+  | LOAD8_OP | LOAD32_OP | LOAD64_OP ->
+      0 (* placeholder, actual load in exec_decoded *)
+  | STORE8_OP | STORE32_OP | STORE64_OP ->
+      0 (* placeholder, actual store in exec_decoded *)
 
 (** [exec_decoded cpu d] executes a decoded micro-op [d] on [cpu], writing the
     result into the destination register if present. Writes to register 0 are
     ignored (x0 is hard-wired zero). *)
 let exec_decoded (cpu : cpu_state) (d : decoded) : unit =
   let regs = cpu.regs in
-  let src1_val =
-    match d.src1 with
-    | Some i -> regs.(i)
-    | None -> failwith "src1 missing"
-  in
-  let src2_val =
-    match (d.src2, d.imm) with
-    | Some i, _ -> regs.(i)
-    | None, Some imm -> imm
-    | None, None -> 0
-  in
-  let result = alu_execute d.alu src1_val src2_val in
-  match d.dst with
-  | Some 0 -> ()
-  | Some dst -> regs.(dst) <- result
-  | None -> ()
+  (* Handle memory operations specially *)
+  match d.alu with
+  | LOAD8_OP | LOAD32_OP | LOAD64_OP -> (
+      let base =
+        match d.src1 with
+        | Some i -> regs.(i)
+        | None -> 0
+      in
+      let offset =
+        match d.imm with
+        | Some n -> n
+        | None -> 0
+      in
+      let addr = base + offset in
+      let value =
+        match get_from_mem addr with
+        | Some v -> v
+        | None -> 0 (* Return 0 if memory location not initialized *)
+      in
+      match d.dst with
+      | Some 0 -> ()
+      | Some dst -> regs.(dst) <- value
+      | None -> ())
+  | STORE8_OP | STORE32_OP | STORE64_OP ->
+      let base =
+        match d.src1 with
+        | Some i -> regs.(i)
+        | None -> 0
+      in
+      let offset =
+        match d.imm with
+        | Some n -> n
+        | None -> 0
+      in
+      let addr = base + offset in
+      let data =
+        match d.src2 with
+        | Some i -> regs.(i)
+        | None -> 0
+      in
+      add_to_mem addr data
+  | _ -> (
+      (* Regular ALU operations *)
+      let src1_val =
+        match d.src1 with
+        | Some i -> regs.(i)
+        | None -> 0
+      in
+      let src2_val =
+        match (d.src2, d.imm) with
+        | Some i, _ -> regs.(i)
+        | None, Some imm -> imm
+        | None, None -> 0
+      in
+      let result = alu_execute d.alu src1_val src2_val in
+      match d.dst with
+      | Some 0 -> ()
+      | Some dst -> regs.(dst) <- result
+      | None -> ())
 
 (** [exec_instruction cpu inst] decodes and executes a single instruction [inst]
     on [cpu]. *)
