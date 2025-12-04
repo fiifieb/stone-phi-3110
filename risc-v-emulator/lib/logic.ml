@@ -515,4 +515,72 @@ let run (cpu : cpu_state) : unit =
   done;
   cpu.pc <- !i
 
-let step (cpu : cpu_state) : unit = failwith "unimplemented"
+(** [step cpu] executes a single instruction at [cpu.pc]. Updates [cpu.pc] to
+    point to the next instruction (or beyond the end if execution is complete).
+    Does nothing if [cpu.pc] is already at or beyond the end of the instruction
+    array. *)
+let step (cpu : cpu_state) : unit =
+  let len = Array.length cpu.instrs in
+  if cpu.pc < len then (
+    let inst = cpu.instrs.(cpu.pc) in
+    let d = decode inst in
+    match d.branch with
+    | Some b -> (
+        let regs = cpu.regs in
+        match b with
+        | "beq" | "bne" | "blt" | "bge" ->
+            let v1 =
+              match d.src1 with
+              | Some r -> regs.(r)
+              | None -> failwith "branch missing src1"
+            in
+            let v2 =
+              match d.src2 with
+              | Some r -> regs.(r)
+              | None -> failwith "branch missing src2"
+            in
+            let offset =
+              match d.imm with
+              | Some n -> n
+              | None -> failwith "branch missing imm"
+            in
+            let take =
+              match b with
+              | "beq" -> v1 = v2
+              | "bne" -> v1 <> v2
+              | "blt" -> v1 < v2
+              | "bge" -> v1 >= v2
+              | _ -> false
+            in
+            if take then cpu.pc <- cpu.pc + offset else cpu.pc <- cpu.pc + 1
+        | "jal" ->
+            let offset =
+              match d.imm with
+              | Some n -> n
+              | None -> failwith "jal missing imm"
+            in
+            (match d.dst with
+            | Some 0 -> ()
+            | Some dst -> regs.(dst) <- cpu.pc + 1
+            | None -> ());
+            cpu.pc <- cpu.pc + offset
+        | "jalr" ->
+            let base =
+              match d.src1 with
+              | Some r -> regs.(r)
+              | None -> failwith "jalr missing src1"
+            in
+            let offset =
+              match d.imm with
+              | Some n -> n
+              | None -> failwith "jalr missing imm"
+            in
+            (match d.dst with
+            | Some 0 -> ()
+            | Some dst -> regs.(dst) <- cpu.pc + 1
+            | None -> ());
+            cpu.pc <- base + offset
+        | _ -> cpu.pc <- cpu.pc + 1)
+    | None ->
+        exec_decoded cpu d;
+        cpu.pc <- cpu.pc + 1)
