@@ -80,6 +80,7 @@ type decoded = {
   src2 : int option;
   imm : int option;
   alu : alu_op;
+  memory : memory_op;
   branch : string option;
 }
 (** A [decoded] instruction contains extracted operand indices and the ALU

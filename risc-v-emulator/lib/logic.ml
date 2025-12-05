@@ -79,7 +79,7 @@ let key_create = Hashtbl.hash
 
 (** [add_to_mem a data] creates a key with the value a to store data in the hash
     table*)
-let add_to_mem (a : int) (data : int64) =
+let add_to_mem (a : int) (data : int) =
   let key = key_create a in
   Hashtbl.add main_mem key data
 
@@ -87,8 +87,7 @@ let add_to_mem (a : int) (data : int64) =
     key_create on a*)
 let get_from_mem (a : int) =
   let key = key_create a in
-  let a = Hashtbl.find main_mem key in
-  Int64.to_int a
+  Hashtbl.find_opt main_mem key
 
 (** [clean_for_mem s] is [clean s] except it replaces ( and ) with whitespaces. 
     This is so for load and store commands we can correct parse strings in the
@@ -116,20 +115,6 @@ let mem_id ((a, b) : int * int) : int =
 let offset_amount ((a, b) : int * int) : int =
   match (a, b) with
   | x, _ -> x
-(* ----- Might be unneeded idk ----- *)
-
-(** [remove_from_mem] removes the data tied to the key created by calling
-    key_create on a*)
-let remove_from_mem (a : int) =
-  let key = key_create a in
-  Hashtbl.remove main_mem key
-
-(** [get_remove] gets and then removes the data tied to the key created by
-    calling key_create on a*)
-let get_remove (a : int) = 
-  let value = get_from_mem a in 
-  let () = remove_from_mem a in 
-  value
 
 (* ---------------------------------------- *)
 
@@ -203,6 +188,7 @@ type cpu_state = {
   mutable pc : int;
   regs : int array;
   instrs : instruction array;
+  instr_strings : string array;
 }
 (** A [cpu_state] bundles all mutable processor state needed by the emulator:
     - [pc] holds the index of the next instruction to execute in [instrs].
@@ -324,12 +310,12 @@ let convert_str_to_instr (input : string) : instruction =
             op2 = None;
             op3 = Value (int_of_string o2);
           }
-      | "jalr", [ o1; o2; o3 ] ->
+      | "jalr", [ o1; o2] ->
           {
             name = Jalr;
             op1 = Register (parse_register o1);
-            op2 = Register (parse_register o2);
-            op3 = Value (int_of_string o3);
+            op2 = Register (mem_id (parse_register_for_mem o2));
+            op3 = Value (offset_amount (parse_register_for_mem o2));
           }
       | ("lw" | "lb" | "ld"), [o1; o2] -> 
           {
@@ -541,8 +527,8 @@ let decode (inst : instruction) : decoded =
         imm = imm_of_operand inst.op3;
         alu = PASS_OP;
         memory = (match inst.name with
-          | LW -> LOAD8_OP
-          | LB -> LOAD32_OP
+          | LW -> LOAD32_OP
+          | LB -> LOAD8_OP
           | LD -> LOAD64_OP
           | _ -> PASS_OP);
         branch = None;
@@ -555,8 +541,8 @@ let decode (inst : instruction) : decoded =
         imm = imm_of_operand inst.op3;
         alu = PASS_OP;
         memory = (match inst.name with
-          | SW -> STORE8_OP
-          | SB -> STORE32_OP
+          | SW -> STORE32_OP
+          | SB -> STORE8_OP
           | SD -> STORE64_OP
           | _ -> PASS_OP);
         branch = None;
@@ -588,7 +574,6 @@ let alu_execute op a b =
     to offset, [a] is either where we are going to store our data or where we are
     grabbing the data from.*)
 let memory_exec op a b c =
-  let a8 = a land 0b11111111 in
   let b8 = b land 0b11111111 in
   let a32 = Int32.of_int a in
   let b32 = Int32.of_int b in
@@ -598,13 +583,13 @@ let memory_exec op a b c =
   (** TODO: Change memory so that it can store int32's and int64's, idk
   if it can atm*)
   match op with 
-  | LOAD8_OP -> get_from_mem (c + b8)
-  | STORE8_OP -> let () = add_to_mem (c + b8) (Int64.of_int a8) in 0
-  | LOAD32_OP -> get_from_mem (c + Int32.to_int b32)
-  | STORE32_OP -> let () = add_to_mem (c + Int32.to_int b32) (Int64.of_int32 a32) in 0
-  | LOAD64_OP -> get_from_mem (c + Int64.to_int b64)
-  | STORE64_OP -> let () = add_to_mem (c + Int64.to_int b64) (a64) in 0
-  | PASS_OP -> a
+  | LOAD8_OP -> get_from_mem (c + a)
+  | STORE8_OP -> let () = add_to_mem (c + a) (b8) in None
+  | LOAD32_OP -> get_from_mem (c + Int32.to_int a32)
+  | STORE32_OP -> let () = add_to_mem (c + Int32.to_int a32) (Int32.to_int b32) in None
+  | LOAD64_OP -> get_from_mem (c + Int64.to_int a64)
+  | STORE64_OP -> let () = add_to_mem (c + Int64.to_int a64) (Int64.to_int b64) in None
+  | PASS_OP -> Some a
 
 (** [exec_decoded cpu d] executes a decoded micro-op [d] on [cpu], writing the
     result into the destination register if present. Writes to register 0 are
@@ -629,7 +614,10 @@ let exec_decoded (cpu : cpu_state) (d : decoded) : unit =
   in
   let result = (match d.memory with
     | PASS_OP -> alu_execute d.alu src1_val src2_val 
-    | _ -> memory_exec d.memory src1_val src2_val imm_val
+    | _ -> let maybe = memory_exec d.memory src1_val src2_val imm_val in 
+      (match maybe with
+      | Some a -> a
+      | None -> 0)
   ) in
   match d.dst with
   | Some 0 -> ()
