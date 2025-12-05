@@ -48,12 +48,15 @@ type alu_op =
   | AND_OP
   | OR_OP
   | XOR_OP
+
+type memory_op =
   | LOAD8_OP
   | STORE8_OP
   | LOAD32_OP
   | STORE32_OP
   | LOAD64_OP
   | STORE64_OP
+  | PASS_OP
 
 type instruction = {
   name : instr_type;
