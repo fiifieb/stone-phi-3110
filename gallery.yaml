@@ -21,7 +21,7 @@ title: "Risc-V Emulator"
 # OK if this is a Cornell Github link, but public gallery viewers won't be able to see it.
 git-repo: "https://github.com/fiifieb/stone-phi-3110"
 # Replace the URL with your own demo video.
-demo-video-url: "https://youtu.be/hRjCLkG06L4"
+demo-video-url: "https://youtu.be/hgCfKh2n5Cg"
 # Write a short, attention-grabbing description of your project.
 desc: >
   A RISC-V assembly emulator built from the ground up in OCaml, designed to parse, decode, 
@@ -29,4 +29,4 @@ desc: >
   text-based assembly programs, simulates register and program-counter state, 
   and executes arithmetic, logic, move, shift, and immediate operations according to 
   the RISC-V specification. Users can supply initial register values, step through instruction execution, 
-  and observe register changes in real time through a command-line interface.
+  and observe register changes in real time in a graphical user interface.
