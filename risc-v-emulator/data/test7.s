@@ -6,8 +6,8 @@ addi x12, x0, 2
 addi x13, x0, 3
 
 # Test JALR - jump and link register
-addi x14, x0, 10
-jalr x15, x14, 2
+addi x14, x0, 6
+jalr x15, 2(x14)
 addi x16, x0, 4
 addi x17, x0, 5
 
